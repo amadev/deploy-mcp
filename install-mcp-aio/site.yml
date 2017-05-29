@@ -22,6 +22,8 @@
     - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
     - service: name=salt-master state=restarted
     - service: name=salt-minion state=restarted
+  tags:
+    - install
 
 - name: get formulas
   hosts: mcp-aio
@@ -64,6 +66,8 @@
       with_items: "{{ formulas }}"
     - make:  chdir=/root/formulas/{{ item }} target=install
       with_items: "{{ formulas }}"
+  tags:
+    - fetch
 
 - name: apply formulas
   hosts: mcp-aio
@@ -72,5 +76,7 @@
     - shell: salt-call state.apply
       register: result
       until: result.rc == 0
-      retries: 10
+      retries: 5
       delay: 0
+  tags:
+    - apply
