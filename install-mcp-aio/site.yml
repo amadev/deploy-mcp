@@ -11,8 +11,12 @@
     - apt: name='reclass' state='present'
     - apt: name='make' state='present'
     - file: path=/etc/salt/minion_id state=absent
-    - lineinfile: dest=/etc/salt/minion line="id: all01.local"
-    - lineinfile: dest=/etc/salt/minion line="master: localhost"
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: "id: all01.local"
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: "master: localhost"
     - template: src=templates/salt_master.conf dest=/etc/salt/master.d/master.conf
     - file: path=/etc/reclass state=directory
     - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
