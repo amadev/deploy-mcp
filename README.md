@@ -2,5 +2,6 @@
 
 Ansible playbook for MCP
 
-# environment variables for cloud access should be set before the playbook call
-ansible-playbook deploy-mcp/site.yml
+git clone git@github.com:amadev/deploy-mcp.git
+sudo apt install python-virtualenv
+make -C deploy-mcp

@@ -24,103 +24,53 @@
         state: present
       register: keypair
 
-    - name: boot a VM for mcp node
+    - name: boot a config VM
       os_server:
-        name: '{{ vm_name }}-{{ item }}'
+        name: '{{ vm_name }}-config'
         image: '{{ image }}'
         flavor: '{{ flavor }}'
         key_name: '{{ keyname }}'
         auto_ip: yes
         timeout: 120
         state: present
-      register: 'instance-{{ item }}'
-      with_items: "{{ nodes }}"
+      register: 'instance_config'
+      
+    - name: boot a controller VM
+      os_server:
+        name: '{{ vm_name }}-controller'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_controller'
 
-    - name: add the new VM to host group
-      add_host: 'hostname={{ instance-vars["item"].openstack.public_v4 }} groupname=mcp-vars["item"] ansible_ssh_user={{ image_user }}'
-      with_items: "{{ nodes }}"
+    - name: boot a compute VM
+      os_server:
+        name: '{{ vm_name }}-compute'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_compute'
+      
+    - name: add the config VM to host group
+      add_host: 'hostname={{ instance_config.openstack.public_v4 }} groupname=mcp_config_group ansible_ssh_user={{ image_user }}'
 
-    - name: wait for the VMs to boot by checking the ssh port
-      wait_for: 'host={{ instance-{{ item }}.openstack.public_v4 }} port=22 timeout=360 state=started'
-      with_items: "{{ nodes }}"
+    - name: wait for the config VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_config.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-# - name: install saltstack
-#   hosts: mcp-aio
-#   become: yes
-#   tasks:
-#     - apt_key: url="https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub" state=present
-#     - apt_repository: repo='deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest xenial main' state=present filename='saltstack' update_cache='yes'
-#     - apt: name='salt-master' state='present'
-#     - apt: name='salt-minion' state='present'
-#     - apt: name='reclass' state='present'
-#     - apt: name='make' state='present'
-#     - file: path=/etc/salt/minion_id state=absent
-#     - lineinfile:
-#         dest: /etc/salt/minion
-#         line: "id: all01.local"
-#     - lineinfile:
-#         dest: /etc/salt/minion
-#         line: "master: localhost"
-#     - template: src=templates/salt_master.conf dest=/etc/salt/master.d/master.conf
-#     - file: path=/etc/reclass state=directory
-#     - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
-#     - service: name=salt-master state=restarted
-#     - service: name=salt-minion state=restarted
-#   tags:
-#     - install
+    - name: add the controller VM to host group
+      add_host: 'hostname={{ instance_controller.openstack.public_v4 }} groupname=mcp_controller_group ansible_ssh_user={{ image_user }}'
 
-# - name: get formulas
-#   hosts: mcp-aio
-#   become: yes
-#   vars:
-#     formulas:
-#       - linux
-#       - reclass
-#       - salt
-#       - openssh
-#       - ntp
-#       - git
-#       - nginx
-#       - collectd
-#       - sensu
-#       - heka
-#       - sphinx
-#       - mysql
-#       - grafana
-#       - libvirt
-#       - rsyslog
-#       - memcached
-#       - rabbitmq
-#       - apache
-#       - keystone
-#       - glance
-#       - nova
-#       - neutron
-#       - cinder
-#       - heat
-#       - horizon
-#       # - ironic
-#       - tftpd-hpa
-#   tasks:
-#     - file: path=/root/formulas state=directory
-#     - git: repo=https://github.com/andreyshestakov/mcp-aio dest=/srv/salt/reclass
-#     - git: repo=https://gerrit.mcp.mirantis.net/p/salt-models/reclass-system.git dest=/srv/salt/reclass/classes/system
-#     - file: src=/usr/share/salt-formulas/reclass/service dest=/srv/salt/reclass/classes/service state=link
-#     - git: repo=https://gerrit.mcp.mirantis.net/salt-formulas/{{ item }}.git dest=/root/formulas/{{ item }}
-#       with_items: "{{ formulas }}"
-#     - make:  chdir=/root/formulas/{{ item }} target=install
-#       with_items: "{{ formulas }}"
-#   tags:
-#     - fetch
+    - name: wait for the controller VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_controller.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-# - name: apply formulas
-#   hosts: mcp-aio
-#   become: yes
-#   tasks:
-#     - shell: salt-call state.apply
-#       register: result
-#       until: result.rc == 0
-#       retries: 5
-#       delay: 0
-#   tags:
-#     - apply
+    - name: add the compute VM to host group
+      add_host: 'hostname={{ instance_compute.openstack.public_v4 }} groupname=mcp_compute_group ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the compute VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_compute.openstack.public_v4 }} port=22 timeout=360 state=started'
