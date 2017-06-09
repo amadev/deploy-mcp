@@ -31,6 +31,8 @@
         state: present
       register: 'instance_config'
 
+    - set_fact: salt_master_ip={{ instance_config.openstack.public_v4 }}
+
     - name: boot a controller VM
       os_server:
         name: '{{ vm_name }}-controller'
@@ -71,23 +73,28 @@
     - name: wait for the compute VM to boot by checking the ssh port
       wait_for: 'host={{ instance_compute.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-- name: install python
+- name: prepare hosts
   hosts: mcp_hosts
   pre_tasks:
     - raw: sudo apt-get update && sudo apt-get install -y python
-  gather_facts: no
-
-- name: add hostname
-  hosts: mcp_hosts
   tasks:
     - shell: 'grep -q {{ ansible_hostname }} /etc/hosts || echo "127.0.0.1 {{ ansible_hostname }}" | sudo tee -a /etc/hosts'
 
-- name: add salt repos
+- name: install salt
   become: yes
   hosts: mcp_hosts
   tasks:
     - apt_key: url="https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub" state=present
     - apt_repository: repo='deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest xenial main' state=present filename='saltstack' update_cache='yes'
+    - apt: name=salt-minion state='present'
+    - file: path=/etc/salt/minion_id state=absent
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: 'id: {{ ansible_hostname }}'
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: 'master: {{ hostvars.localhost.salt_master_ip }}'
+    - service: name='salt-minion' state=restarted
 
 - name: install salt-master
   hosts: mcp_config
@@ -100,4 +107,3 @@
     - file: path=/etc/reclass state=directory
     - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
     - service: name=salt-master state=restarted
-    - service: name=salt-minion state=restarted
