@@ -11,10 +11,6 @@
       image_user: ubuntu
       flavor: m1.large
       public_key_file: '{{ lookup("env", "HOME") }}/.ssh/id_rsa.pub'
-      nodes:
-        - config
-        # - controller
-        # - compute
 
   tasks:
     - name: register a keypair
@@ -34,7 +30,7 @@
         timeout: 120
         state: present
       register: 'instance_config'
-      
+
     - name: boot a controller VM
       os_server:
         name: '{{ vm_name }}-controller'
@@ -56,21 +52,52 @@
         timeout: 120
         state: present
       register: 'instance_compute'
-      
+
     - name: add the config VM to host group
-      add_host: 'hostname={{ instance_config.openstack.public_v4 }} groupname=mcp_config_group ansible_ssh_user={{ image_user }}'
+      add_host: 'hostname={{ instance_config.openstack.public_v4 }} groups=mcp_config,mcp_hosts ansible_ssh_user={{ image_user }}'
 
     - name: wait for the config VM to boot by checking the ssh port
       wait_for: 'host={{ instance_config.openstack.public_v4 }} port=22 timeout=360 state=started'
 
     - name: add the controller VM to host group
-      add_host: 'hostname={{ instance_controller.openstack.public_v4 }} groupname=mcp_controller_group ansible_ssh_user={{ image_user }}'
+      add_host: 'hostname={{ instance_controller.openstack.public_v4 }} groupns=mcp_controller,mcp_hosts ansible_ssh_user={{ image_user }}'
 
     - name: wait for the controller VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller.openstack.public_v4 }} port=22 timeout=360 state=started'
 
     - name: add the compute VM to host group
-      add_host: 'hostname={{ instance_compute.openstack.public_v4 }} groupname=mcp_compute_group ansible_ssh_user={{ image_user }}'
+      add_host: 'hostname={{ instance_compute.openstack.public_v4 }} groups=mcp_compute,mcp_hosts ansible_ssh_user={{ image_user }}'
 
     - name: wait for the compute VM to boot by checking the ssh port
       wait_for: 'host={{ instance_compute.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+- name: install python
+  hosts: mcp_hosts
+  pre_tasks:
+    - raw: sudo apt-get update && sudo apt-get install -y python
+  gather_facts: no
+
+- name: add hostname
+  hosts: mcp_hosts
+  tasks:
+    - shell: 'grep -q {{ ansible_hostname }} /etc/hosts || echo "127.0.0.1 {{ ansible_hostname }}" | sudo tee -a /etc/hosts'
+
+- name: add salt repos
+  become: yes
+  hosts: mcp_hosts
+  tasks:
+    - apt_key: url="https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub" state=present
+    - apt_repository: repo='deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest xenial main' state=present filename='saltstack' update_cache='yes'
+
+- name: install salt-master
+  hosts: mcp_config
+  become: yes
+  tasks:
+    - apt: name='salt-master' state='present'
+    - apt: name='reclass' state='present'
+    - apt: name='make' state='present'
+    - template: src=templates/salt_master.conf dest=/etc/salt/master.d/master.conf
+    - file: path=/etc/reclass state=directory
+    - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
+    - service: name=salt-master state=restarted
+    - service: name=salt-minion state=restarted
