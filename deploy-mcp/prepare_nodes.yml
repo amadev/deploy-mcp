@@ -1,0 +1,113 @@
+---
+
+- name: boot VM nodes
+  hosts: localhost
+  connection: local
+
+  vars:
+      keyname: '{{ lookup("env", "USER") }}-keypair'
+      vm_name: '{{ lookup("env", "USER") }}-mcp'
+      image: ubuntu-16.04-server-cloudimg
+      image_user: ubuntu
+      flavor: m1.large
+      public_key_file: '{{ lookup("env", "HOME") }}/.ssh/id_rsa.pub'
+
+  tasks:
+    - name: register a keypair
+      os_keypair:
+        name: '{{ keyname }}'
+        public_key_file: '{{ public_key_file }}'
+        state: present
+      register: keypair
+
+
+    - name: boot a config VM
+      os_server:
+        name: '{{ vm_name }}-config'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_config'
+
+    - name: add the config VM to host group
+      add_host: 'hostname={{ instance_config.openstack.public_v4 }} groups=mcp_config,mcp_hosts ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the config VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_config.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+    - set_fact: salt_master_ip={{ instance_config.openstack.private_v4 }}
+
+
+    - name: boot a controller1 VM
+      os_server:
+        name: '{{ vm_name }}-controller1'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_controller1'
+
+    - name: add the controller1 VM to host group
+      add_host: 'hostname={{ instance_controller1.openstack.public_v4 }} groups=mcp_controller,mcp_hosts ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the controller1 VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_controller1.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+
+    - name: boot a controller2 VM
+      os_server:
+        name: '{{ vm_name }}-controller2'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_controller2'
+
+    - name: add the controller2 VM to host group
+      add_host: 'hostname={{ instance_controller2.openstack.public_v4 }} groups=mcp_controller,mcp_hosts ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the controller2 VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_controller2.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+
+    - name: boot a controller3 VM
+      os_server:
+        name: '{{ vm_name }}-controller3'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_controller3'
+
+    - name: add the controller3 VM to host group
+      add_host: 'hostname={{ instance_controller3.openstack.public_v4 }} groups=mcp_controller,mcp_hosts ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the controller3 VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_controller3.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+
+    - name: boot a compute1 VM
+      os_server:
+        name: '{{ vm_name }}-compute1'
+        image: '{{ image }}'
+        flavor: '{{ flavor }}'
+        key_name: '{{ keyname }}'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_compute1'
+
+    - name: add the compute1 VM to host group
+      add_host: 'hostname={{ instance_compute1.openstack.public_v4 }} groups=mcp_compute,mcp_hosts ansible_ssh_user={{ image_user }}'
+
+    - name: wait for the compute1 VM to boot by checking the ssh port
+      wait_for: 'host={{ instance_compute1.openstack.public_v4 }} port=22 timeout=360 state=started'

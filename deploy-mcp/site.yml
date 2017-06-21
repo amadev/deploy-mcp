@@ -1,82 +1,14 @@
 ---
 
-- name: boot VM nodes
-  hosts: localhost
-  connection: local
-
-  vars:
-      keyname: '{{ lookup("env", "USER") }}-keypair'
-      vm_name: '{{ lookup("env", "USER") }}-mcp'
-      image: ubuntu-16.04-server-cloudimg
-      image_user: ubuntu
-      flavor: m1.large
-      public_key_file: '{{ lookup("env", "HOME") }}/.ssh/id_rsa.pub'
-
-  tasks:
-    - name: register a keypair
-      os_keypair:
-        name: '{{ keyname }}'
-        public_key_file: '{{ public_key_file }}'
-        state: present
-      register: keypair
-
-    - name: boot a config VM
-      os_server:
-        name: '{{ vm_name }}-config'
-        image: '{{ image }}'
-        flavor: '{{ flavor }}'
-        key_name: '{{ keyname }}'
-        auto_ip: yes
-        timeout: 120
-        state: present
-      register: 'instance_config'
-
-    - set_fact: salt_master_ip={{ instance_config.openstack.private_v4 }}
-
-    - name: boot a controller VM
-      os_server:
-        name: '{{ vm_name }}-controller'
-        image: '{{ image }}'
-        flavor: '{{ flavor }}'
-        key_name: '{{ keyname }}'
-        auto_ip: yes
-        timeout: 120
-        state: present
-      register: 'instance_controller'
-
-    - name: boot a compute VM
-      os_server:
-        name: '{{ vm_name }}-compute'
-        image: '{{ image }}'
-        flavor: '{{ flavor }}'
-        key_name: '{{ keyname }}'
-        auto_ip: yes
-        timeout: 120
-        state: present
-      register: 'instance_compute'
-
-    - name: add the config VM to host group
-      add_host: 'hostname={{ instance_config.openstack.public_v4 }} groups=mcp_config,mcp_hosts ansible_ssh_user={{ image_user }}'
-
-    - name: wait for the config VM to boot by checking the ssh port
-      wait_for: 'host={{ instance_config.openstack.public_v4 }} port=22 timeout=360 state=started'
-
-    - name: add the controller VM to host group
-      add_host: 'hostname={{ instance_controller.openstack.public_v4 }} groups=mcp_controller,mcp_hosts ansible_ssh_user={{ image_user }}'
-
-    - name: wait for the controller VM to boot by checking the ssh port
-      wait_for: 'host={{ instance_controller.openstack.public_v4 }} port=22 timeout=360 state=started'
-
-    - name: add the compute VM to host group
-      add_host: 'hostname={{ instance_compute.openstack.public_v4 }} groups=mcp_compute,mcp_hosts ansible_ssh_user={{ image_user }}'
-
-    - name: wait for the compute VM to boot by checking the ssh port
-      wait_for: 'host={{ instance_compute.openstack.public_v4 }} port=22 timeout=360 state=started'
-
-- name: prepare hosts
+- include: prepare_nodes.yml
+- name: install python
+  gather_facts: no
   hosts: mcp_hosts
   pre_tasks:
     - raw: sudo apt-get update && sudo apt-get install -y python
+
+- name: add hostnames
+  hosts: mcp_hosts
   tasks:
     - shell: 'grep -q {{ ansible_hostname }} /etc/hosts || echo "127.0.0.1 {{ ansible_hostname }}" | sudo tee -a /etc/hosts'
 
