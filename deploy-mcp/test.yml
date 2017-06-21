@@ -1,0 +1,22 @@
+- name: boot VM nodes
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: boot
+      os_server:
+        name: 'amadev-mcp-config'
+        image: 'ubuntu-16.04-server-cloudimg'
+        flavor: 'm1.large'
+        key_name: 'amadev-keypair'
+        auto_ip: yes
+        timeout: 120
+        state: present
+      register: 'instance_config'
+    - set_fact: master_ip={{ instance_config.openstack.public_v4 }}
+
+- name: print vars
+  hosts: m_config
+  
+  tasks:
+    - debug:
+        var: hostvars

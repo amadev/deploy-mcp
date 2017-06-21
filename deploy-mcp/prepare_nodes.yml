@@ -40,7 +40,6 @@
 
     - set_fact: salt_master_ip={{ instance_config.openstack.private_v4 }}
 
-
     - name: boot a controller1 VM
       os_server:
         name: '{{ vm_name }}-controller1'
@@ -57,7 +56,6 @@
 
     - name: wait for the controller1 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller1.openstack.public_v4 }} port=22 timeout=360 state=started'
-
 
     - name: boot a controller2 VM
       os_server:
@@ -76,7 +74,6 @@
     - name: wait for the controller2 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller2.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-
     - name: boot a controller3 VM
       os_server:
         name: '{{ vm_name }}-controller3'
@@ -94,7 +91,6 @@
     - name: wait for the controller3 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller3.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-
     - name: boot a compute1 VM
       os_server:
         name: '{{ vm_name }}-compute1'
@@ -111,3 +107,14 @@
 
     - name: wait for the compute1 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_compute1.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+- name: install python
+  gather_facts: no
+  hosts: mcp_hosts
+  pre_tasks:
+    - raw: sudo apt-get update && sudo apt-get install -y python
+
+- name: add hostnames
+  hosts: mcp_hosts
+  tasks:
+    - shell: 'grep -q {{ ansible_hostname }} /etc/hosts || echo "127.0.0.1 {{ ansible_hostname }}" | sudo tee -a /etc/hosts'

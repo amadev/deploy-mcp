@@ -1,0 +1,37 @@
+---
+
+- name: add salt repo
+  become: yes
+  hosts: mcp_hosts
+  tasks:
+    - apt_key: url="https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub" state=present
+    - apt_repository: repo='deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest xenial main' state=present filename='saltstack' update_cache='yes'
+
+- name: install salt-master
+  hosts: mcp_config
+  become: yes
+  vars_files:
+    - config.yml
+  tasks:
+    - apt: name='salt-master' state='present'
+    - apt: name='reclass' state='present'
+    - apt: name='make' state='present'
+    - template: src=templates/salt_master.conf dest=/etc/salt/master.d/master.conf
+    - file: path=/etc/reclass state=directory
+    - template: src=templates/reclass-config.yml dest=/etc/reclass/reclass-config.yml
+    - service: name=salt-master state=restarted
+
+- name: install salt-minion
+  hosts: mcp_hosts
+  become: yes
+  tasks:
+    - apt: name=salt-minion state='present'
+    - file: path=/etc/salt/minion_id state=absent
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: 'id: {{ ansible_hostname }}'
+    - lineinfile:
+        dest: /etc/salt/minion
+        line: 'master: {{ hostvars.localhost.salt_master_ip }}'
+        regexp: '^master: '
+    - service: name='salt-minion' state=restarted
