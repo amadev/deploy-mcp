@@ -59,7 +59,7 @@
     - name: fetch reclass mcp-virtual-lab model
       git:
         repo: https://gerrit.mcp.mirantis.net/p/salt-models/mcp-virtual-lab.git
-        dest: '{{ salt_reclass }}/classes'
+        dest: '{{ salt_reclass }}'
         recursive: yes
         
     - name: link to formulas reclass folder
