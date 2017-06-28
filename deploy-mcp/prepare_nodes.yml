@@ -38,7 +38,9 @@
     - name: wait for the config VM to boot by checking the ssh port
       wait_for: 'host={{ instance_config.openstack.public_v4 }} port=22 timeout=360 state=started'
 
-    - set_fact: salt_master_ip={{ instance_config.openstack.private_v4 }}
+    - set_fact: config_private_ip={{ instance_config.openstack.private_v4 }}
+    - set_fact: config_ip={{ instance_config.openstack.public_v4 }}
+    - set_fact: config_name={{ instance_config.openstack.name }}
 
     - name: boot a controller1 VM
       os_server:
@@ -57,6 +59,10 @@
     - name: wait for the controller1 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller1.openstack.public_v4 }} port=22 timeout=360 state=started'
 
+    - set_fact: controller1_private_ip={{ instance_controller1.openstack.private_v4 }}
+    - set_fact: controller1_ip={{ instance_controller1.openstack.public_v4 }}
+    - set_fact: controller1_name={{ instance_controller1.openstack.name }}
+
     - name: boot a controller2 VM
       os_server:
         name: '{{ vm_name }}-controller2'
@@ -73,6 +79,10 @@
 
     - name: wait for the controller2 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller2.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+    - set_fact: controller2_private_ip={{ instance_controller2.openstack.private_v4 }}
+    - set_fact: controller2_ip={{ instance_controller2.openstack.public_v4 }}
+    - set_fact: controller2_name={{ instance_controller2.openstack.name }}
 
     - name: boot a controller3 VM
       os_server:
@@ -91,6 +101,10 @@
     - name: wait for the controller3 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_controller3.openstack.public_v4 }} port=22 timeout=360 state=started'
 
+    - set_fact: controller3_private_ip={{ instance_controller3.openstack.private_v4 }}
+    - set_fact: controller3_ip={{ instance_controller3.openstack.public_v4 }}
+    - set_fact: controller3_name={{ instance_controller3.openstack.name }}
+
     - name: boot a compute1 VM
       os_server:
         name: '{{ vm_name }}-compute1'
@@ -107,6 +121,10 @@
 
     - name: wait for the compute1 VM to boot by checking the ssh port
       wait_for: 'host={{ instance_compute1.openstack.public_v4 }} port=22 timeout=360 state=started'
+
+    - set_fact: compute1_private_ip={{ instance_compute1.openstack.private_v4 }}
+    - set_fact: compute1_ip={{ instance_compute1.openstack.public_v4 }}
+    - set_fact: compute1_name={{ instance_compute1.openstack.name }}
 
 - name: install python
   gather_facts: no

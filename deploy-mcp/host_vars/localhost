@@ -1,0 +1,17 @@
+---
+
+config_ip: 172.18.237.214
+config_private_ip: 192.168.0.23
+config_name: amadev-mcp-config
+controller1_ip: 172.18.237.203
+controller1_private_ip: 192.168.0.26
+controller1_name: amadev-mcp-controller1
+controller2_ip: 172.18.237.87
+controller2_private_ip: 192.168.0.27
+controller2_name: amadev-mcp-controller2
+controller3_ip: 172.18.237.227
+controller3_private_ip: 192.168.0.28
+controller3_name: amadev-mcp-controller3
+compute1_ip: 172.18.237.72
+compute1_private_ip: 192.168.0.29
+compute1_name: amadev-mcp-compute1

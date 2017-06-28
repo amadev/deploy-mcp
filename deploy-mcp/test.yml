@@ -12,11 +12,13 @@
         timeout: 120
         state: present
       register: 'instance_config'
-    - set_fact: master_ip={{ instance_config.openstack.public_v4 }}
+    - set_fact: config_ip={{ instance_config.openstack.public_v4 }}
+    - set_fact: config_private_ip={{ instance_config.openstack.private_v4 }}
+    - set_fact: config_name={{ instance_config.openstack.name }}
 
 - name: print vars
   hosts: m_config
-  
+
   tasks:
     - debug:
         var: hostvars

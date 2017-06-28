@@ -32,6 +32,6 @@
         line: 'id: {{ ansible_hostname }}'
     - lineinfile:
         dest: /etc/salt/minion
-        line: 'master: {{ hostvars.localhost.salt_master_ip }}'
+        line: 'master: {{ hostvars.localhost.config_private_ip }}'
         regexp: '^master: '
     - service: name='salt-minion' state=restarted

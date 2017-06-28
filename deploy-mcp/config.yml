@@ -3,3 +3,4 @@
 salt_scripts: /srv/salt/scripts
 salt_reclass: /srv/salt/reclass
 formulas_path: /root/formulas
+model: virtual-mcp-ocata-ovs

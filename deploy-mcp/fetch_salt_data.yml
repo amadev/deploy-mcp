@@ -7,7 +7,7 @@
     - apt: name=git state=present
     - apt: name=curl state=present
     - apt: name=subversion state=present
-      
+
 - name: prepare salt sources
   become: yes
   hosts: amadev-mcp-config
@@ -42,13 +42,13 @@
       - horizon
       - tftpd-hpa
       - haproxy
-    
+
   tasks:
     - name: fix dns name is not available
       lineinfile:
         dest: /etc/hosts
         line: '172.18.248.114  gerrit.mcp.mirantis.net'
-        
+
     - name: clone scripts
       subversion:
         repo: https://github.com/salt-formulas/salt-formulas/trunk/deploy/scripts
@@ -61,23 +61,48 @@
         repo: https://gerrit.mcp.mirantis.net/p/salt-models/mcp-virtual-lab.git
         dest: '{{ salt_reclass }}'
         recursive: yes
-        
+
     - name: link to formulas reclass folder
       file:
         src: /usr/share/salt-formulas/reclass/service
         dest: '{{ salt_reclass }}/classes/service'
         state: link
         force: yes
-        
+
     - name: fetch formulas
       git:
         repo: 'https://gerrit.mcp.mirantis.net/salt-formulas/{{ item }}.git'
         dest: '{{ formulas_path }}/{{ item }}'
       with_items: "{{ formulas }}"
 
-    - name: install formulas        
+    - name: install formulas
       make:
         chdir: '{{ formulas_path }}/{{ item }}'
         target: install
       with_items: "{{ formulas }}"
-      
+
+- name: config model
+  become: yes
+  hosts: amadev-mcp-config
+  vars_files:
+    - config.yml
+  tasks:
+    - name: add node config
+      template:
+        src: templates/node_config.yml
+        dest: '{{ salt_reclass }}/nodes/{{ ansible_hostname }}.yml'
+
+    - name: update infra config
+      template:
+        src: templates/infra_config.yml
+        dest: '{{ salt_reclass }}/classes/cluster/{{ model }}/infra/config.yml'
+
+    - name: update init
+      template:
+        src: templates/init.yml
+        dest: '{{ salt_reclass }}/classes/cluster/{{ model }}/init.yml'
+
+    - name: update openstack init
+      template:
+        src: templates/openstack_init.yml
+        dest: '{{ salt_reclass }}/classes/cluster/{{ model }}/openstack/init.yml'
