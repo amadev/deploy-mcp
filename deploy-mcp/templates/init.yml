@@ -15,8 +15,8 @@ parameters:
     # infra service addresses
     infra_config_address: {{ hostvars.localhost.config_ip }}
     # openstack service addresses
-    # openstack_proxy_address: 172.16.10.121
-    # openstack_proxy_node01_address: 172.16.10.121
+    openstack_proxy_address: {{ hostvars.localhost.controller1_ip }}
+    openstack_proxy_node01_address: {{ hostvars.localhost.controller1_ip }}
     openstack_control_address: {{ hostvars.localhost.controller1_ip }}
     openstack_control_node01_address: {{ hostvars.localhost.controller1_ip }}
     openstack_control_node02_address: {{ hostvars.localhost.controller2_ip }}
@@ -27,10 +27,10 @@ parameters:
     openstack_message_queue_node02_address: ${_param:openstack_control_node02_address}
     openstack_message_queue_node03_address: ${_param:openstack_control_node03_address}
     # stacklight service addresses
-    # stacklight_monitor_address: 172.16.10.253
-    # stacklight_monitor_node01_address: 172.16.10.107
-    # stacklight_monitor_node02_address: 172.16.10.108
-    # stacklight_monitor_node03_address: 172.16.10.109
+    stacklight_monitor_address: {{ hostvars.localhost.controller1_ip }}
+    stacklight_monitor_node01_address: {{ hostvars.localhost.controller1_ip }}
+    stacklight_monitor_node02_address: {{ hostvars.localhost.controller1_ip }}
+    stacklight_monitor_node03_address: {{ hostvars.localhost.controller1_ip }}
     stacklight_telemetry_node01_address: ${_param:stacklight_monitor_node01_address}
     stacklight_log_address: ${_param:stacklight_monitor_address}
     openstack_gateway_address: {{ hostvars.localhost.controller1_ip }}

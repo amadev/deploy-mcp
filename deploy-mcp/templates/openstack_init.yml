@@ -67,12 +67,12 @@ parameters:
     heat_version: ${_param:openstack_version}
     heat_service_host: ${_param:cluster_vip_address}
     heat_domain_admin_password: workshop
-    # ceilometer_version: ${_param:openstack_version}
-    # ceilometer_service_host: 172.16.10.108
+    ceilometer_version: ${_param:openstack_version}
+    ceilometer_service_host: {{ hostvars.localhost.controller1_ip }}
     cinder_version: ${_param:openstack_version}
     cinder_service_host: ${_param:cluster_vip_address}
-    # ceilometer_graphite_publisher_host: 172.16.10.107
-    # ceilometer_graphite_publisher_port: 2013
+    ceilometer_graphite_publisher_host: {{ hostvars.localhost.controller1_ip }}
+    ceilometer_graphite_publisher_port: 2013
     nova_version: ${_param:openstack_version}
     nova_service_host: ${_param:cluster_vip_address}
     nova_vncproxy_url: http://${_param:cluster_vip_address}:8060
@@ -117,16 +117,16 @@ parameters:
   linux:
     network:
       host:
-        # prx:
-        #   address: ${_param:openstack_proxy_address}
-        #   names:
-        #   - prx
-        #   - prx.${_param:cluster_domain}
-        # prx01:
-        #   address: ${_param:openstack_proxy_node01_address}
-        #   names:
-        #   - prx01
-        #   - prx01.${_param:cluster_domain}
+        prx:
+          address: ${_param:openstack_proxy_address}
+          names:
+          - prx
+          - prx.${_param:cluster_domain}
+        prx01:
+          address: ${_param:openstack_proxy_node01_address}
+          names:
+          - prx01
+          - prx01.${_param:cluster_domain}
         ctl:
           address: ${_param:openstack_control_address}
           names:
@@ -151,11 +151,11 @@ parameters:
           - ctl03
           - ctl03.${_param:cluster_domain}
           - {{ hostvars.localhost.controller3_name }}
-        # gtw01:
-        #   address: ${_param:openstack_gateway_address}
-        #   names:
-        #   - gtw01
-        #   - gtw01.${_param:cluster_domain}
+        gtw01:
+          address: ${_param:openstack_gateway_address}
+          names:
+          - gtw01
+          - gtw01.${_param:cluster_domain}
         cmp01:
           address: {{ hostvars.localhost.compute1_ip }}
           names:
